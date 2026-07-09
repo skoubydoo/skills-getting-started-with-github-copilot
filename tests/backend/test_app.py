@@ -1,7 +1,7 @@
 import copy
 
+import httpx
 import pytest
-from fastapi.testclient import TestClient
 
 from src.app import activities, app
 
@@ -14,17 +14,19 @@ def reset_activities():
     activities.update(original_activities)
 
 
-def test_unregister_participant_removes_email_from_activity():
-    client = TestClient(app)
+@pytest.mark.anyio
+async def test_unregister_participant_removes_email_from_activity():
     activity_name = "Chess Club"
     email = "newstudent@mergington.edu"
 
     activities[activity_name]["participants"].append(email)
 
-    response = client.delete(
-        f"/activities/{activity_name}/participants",
-        params={"email": email},
-    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.delete(
+            f"/activities/{activity_name}/participants",
+            params={"email": email},
+        )
 
     assert response.status_code == 200
     assert email not in activities[activity_name]["participants"]
