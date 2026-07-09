@@ -4,6 +4,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -22,21 +31,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const participants = details.participants || [];
         const spotsLeft = Math.max(details.max_participants - participants.length, 0);
         const participantItems = participants.length
-          ? participants.map((email) => `
+          ? participants.map((email) => {
+              const escapedEmail = escapeHtml(email);
+              return `
               <li class="participant-item">
-                <span>${email}</span>
+                <span>${escapedEmail}</span>
                 <button
                   type="button"
                   class="remove-participant-btn"
                   data-activity="${name}"
-                  data-email="${email}"
-                  aria-label="Remove ${email} from ${name}"
-                  title="Unregister ${email}"
+                  data-email="${escapedEmail}"
+                  aria-label="Remove ${escapedEmail} from ${name}"
+                  title="Unregister ${escapedEmail}"
                 >
                   ✕
                 </button>
               </li>
-            `).join("")
+            `;
+            }).join("")
           : '<li class="empty-state">No participants yet</li>';
 
         activityCard.innerHTML = `
